@@ -1,0 +1,52 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: 
+jobs:
+  get-user-info:
+    name: Get user information
+    runs-on: ubuntu-latest
+    steps:
+      - name: User information
+        env:
+          STARTED_BY: ${{github.actor}}
+          EVENT: ${{github.event_name}}
+          BRANCH: ${{github.ref_name}}
+        run: |
+          echo "### Started by $STARTED_BY — event: $EVENT — branch: $BRANCH" >> $GITHUB_STEP_SUMMARY
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    env:
+      BUILD_CONFIGURATION: Release
+    steps:
+      - name: Get Code
+        uses: actions/checkout@v7
+      - name: Install .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build 
+        run: dotnet build --no-restore --configuration ${{env.BUILD_CONFIGURATION}}
+      - name: Test
+        run : dotnet test --no-build --configuration ${{env.BUILD_CONFIGURATION}}
+  formatering:
+    name: Code format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Code
+        uses: actions/checkout@v7
+      - name: Install .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Format Code
+        run: |
+          dotnet format --verify-no-changes
